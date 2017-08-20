@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Croqueta examples</title>
+    <style>
+body, canvas {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+body {
+    overflow: hidden;
+}
+    </style>
+
+    <script src="../dist/croqueta.js"></script>
+    
+    <script>
+
+function setup() {
+    let croqueta = new CROQUETA.Container("canvasId");
+    croqueta.start();
+}
+
+window.addEventListener("load", setup);
+
+    </script>
+</head>
+
+<body>
+    <canvas id="canvasId">
+</body>
+
+</html>

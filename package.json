@@ -1,0 +1,17 @@
+{
+  "name": "croqueta",
+  "version": "0.0.1",
+  "description": "Graphic library",
+  "main": "croqueta.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc && rollup -c"
+  },
+  "author": "Ruben Moreno Montoliu <ruben3d@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/webgl2": "0.0.1",
+    "rollup": "^0.45.2",
+    "typescript": "^2.4.2"
+  }
+}
