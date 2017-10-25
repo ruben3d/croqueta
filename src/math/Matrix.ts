@@ -141,8 +141,44 @@ export class Matrix implements Cloneable<Matrix>, Copyable<Matrix> {
     }
 
     mul(other: Matrix): Matrix {
-        // TODO
+        let n0 = this.m[0];
+        let n1 = this.m[1];
+        let n2 = this.m[2];
+        let n3 = this.m[3];
+        let n4 = this.m[4];
+        let n5 = this.m[5];
+        let n6 = this.m[6];
+        let n7 = this.m[7];
+        let n8 = this.m[8];
+        let n9 = this.m[9];
+        let n10 = this.m[10];
+        let n11 = this.m[11];
+        let n12 = this.m[12];
+        let n13 = this.m[13];
+        let n14 = this.m[14];
+        let n15 = this.m[15];
+        this.m[0]  = n0 * other.m[0]  + n4 * other.m[1]  + n8  * other.m[2]  + n12 * other.m[3];  // 1st column
+        this.m[1]  = n1 * other.m[0]  + n5 * other.m[1]  + n9  * other.m[2]  + n13 * other.m[3];
+        this.m[2]  = n2 * other.m[0]  + n6 * other.m[1]  + n10 * other.m[2]  + n14 * other.m[3];
+        this.m[3]  = n3 * other.m[0]  + n7 * other.m[1]  + n11 * other.m[2]  + n15 * other.m[3];
+        this.m[4]  = n0 * other.m[4]  + n4 * other.m[5]  + n8  * other.m[6]  + n12 * other.m[7];  // 2nd column
+        this.m[5]  = n1 * other.m[4]  + n5 * other.m[5]  + n9  * other.m[6]  + n13 * other.m[7];
+        this.m[6]  = n2 * other.m[4]  + n6 * other.m[5]  + n10 * other.m[6]  + n14 * other.m[7];
+        this.m[7]  = n3 * other.m[4]  + n7 * other.m[5]  + n11 * other.m[6]  + n15 * other.m[7];
+        this.m[8]  = n0 * other.m[8]  + n4 * other.m[9]  + n8  * other.m[10] + n12 * other.m[11];  // 3rd column
+        this.m[9]  = n1 * other.m[8]  + n5 * other.m[9]  + n9  * other.m[10] + n13 * other.m[11];
+        this.m[10] = n2 * other.m[8]  + n6 * other.m[9]  + n10 * other.m[10] + n14 * other.m[11];
+        this.m[11] = n3 * other.m[8]  + n7 * other.m[9]  + n11 * other.m[10] + n15 * other.m[11];
+        this.m[12] = n0 * other.m[12] + n4 * other.m[13] + n8  * other.m[14] + n12 * other.m[15]; // 4th column
+        this.m[13] = n1 * other.m[12] + n5 * other.m[13] + n9  * other.m[14] + n13 * other.m[15];
+        this.m[14] = n2 * other.m[12] + n6 * other.m[13] + n10 * other.m[14] + n14 * other.m[15];
+        this.m[15] = n3 * other.m[12] + n7 * other.m[13] + n11 * other.m[14] + n15 * other.m[15];
         return this;
+    }
+
+    consMul(other: Matrix): Matrix {
+        let r = new Matrix().copyFrom(this);
+        return r.mul(other);
     }
 
     transpose(): Matrix {
