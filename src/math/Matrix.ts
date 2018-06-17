@@ -177,7 +177,7 @@ export class Matrix implements Cloneable<Matrix>, Copyable<Matrix> {
     }
 
     consMul(other: Matrix): Matrix {
-        let r = new Matrix().copyFrom(this);
+        let r = this.clone();
         return r.mul(other);
     }
 

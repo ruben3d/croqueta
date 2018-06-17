@@ -6,12 +6,12 @@ import { ShaderManager } from "./ShaderManager"
 export class Renderer extends KernelTask {
 
     private gl: WebGL2RenderingContext;
-    private shaderManager: ShaderManager;
+    //private shaderManager: ShaderManager;
 
     constructor(renderingContext: WebGL2RenderingContext, applicationContext: Context, shaderManager: ShaderManager) {
         super("renderer", applicationContext);
         this.gl = renderingContext;
-        this.shaderManager = shaderManager;
+        //this.shaderManager = shaderManager;
 
         this.setup(this.gl);
     }

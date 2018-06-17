@@ -4,6 +4,7 @@
         "module": "es6",
         "outDir": "build",
         "noEmitOnError": true,
+        "forceConsistentCasingInFileNames": true,
         "strict": true,
         "allowUnreachableCode": false,
         "noFallthroughCasesInSwitch": true,

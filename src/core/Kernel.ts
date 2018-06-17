@@ -32,13 +32,13 @@ class TimeHistory {
 export class Kernel {
 
     private enabled: boolean;
-    private eventManager: EventManager;
+    //private eventManager: EventManager;
     private tasks: Array<KernelTask>;
     private history: TimeHistory;
 
     constructor(eventManager: EventManager, histSize: number) {
         this.enabled = false;
-        this.eventManager = eventManager;
+        //this.eventManager = eventManager;
         this.tasks = new Array<KernelTask>();
         this.history = new TimeHistory(histSize);
     }

@@ -1,9 +1,9 @@
 
 export class ShaderManager {
 
-    private gl: WebGL2RenderingContext;
+    //private gl: WebGL2RenderingContext;
 
     constructor(renderingContext: WebGL2RenderingContext) {
-        this.gl = renderingContext;
+        //this.gl = renderingContext;
     }
 }

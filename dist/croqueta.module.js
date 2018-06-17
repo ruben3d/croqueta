@@ -338,7 +338,6 @@ class TimeHistory {
 class Kernel {
     constructor(eventManager, histSize) {
         this.enabled = false;
-        this.eventManager = eventManager;
         this.tasks = new Array();
         this.history = new TimeHistory(histSize);
     }
@@ -377,7 +376,6 @@ class Renderer extends KernelTask {
     constructor(renderingContext, applicationContext, shaderManager) {
         super("renderer", applicationContext);
         this.gl = renderingContext;
-        this.shaderManager = shaderManager;
         this.setup(this.gl);
     }
     setup(gl) {
@@ -391,7 +389,6 @@ class Renderer extends KernelTask {
 
 class ShaderManager {
     constructor(renderingContext) {
-        this.gl = renderingContext;
     }
 }
 
@@ -399,14 +396,14 @@ class Container {
     constructor(canvasId) {
         this.canvasId = canvasId;
         this.eventManager = new EventManager();
-    }
-    start() {
         this.renderingContext = this.createContext(this.canvasId);
         this.applicationContext = new Context();
         this.shaderManager = new ShaderManager(this.renderingContext);
         this.renderer = new Renderer(this.renderingContext, this.applicationContext, this.shaderManager);
         this.kernel = new Kernel(this.eventManager, 6);
         this.kernel.addTask(this.renderer);
+    }
+    start() {
         this.kernel.start();
     }
     shutdown() {
@@ -519,7 +516,43 @@ class Matrix {
         return r.sub(other);
     }
     mul(other) {
+        let n0 = this.m[0];
+        let n1 = this.m[1];
+        let n2 = this.m[2];
+        let n3 = this.m[3];
+        let n4 = this.m[4];
+        let n5 = this.m[5];
+        let n6 = this.m[6];
+        let n7 = this.m[7];
+        let n8 = this.m[8];
+        let n9 = this.m[9];
+        let n10 = this.m[10];
+        let n11 = this.m[11];
+        let n12 = this.m[12];
+        let n13 = this.m[13];
+        let n14 = this.m[14];
+        let n15 = this.m[15];
+        this.m[0] = n0 * other.m[0] + n4 * other.m[1] + n8 * other.m[2] + n12 * other.m[3];
+        this.m[1] = n1 * other.m[0] + n5 * other.m[1] + n9 * other.m[2] + n13 * other.m[3];
+        this.m[2] = n2 * other.m[0] + n6 * other.m[1] + n10 * other.m[2] + n14 * other.m[3];
+        this.m[3] = n3 * other.m[0] + n7 * other.m[1] + n11 * other.m[2] + n15 * other.m[3];
+        this.m[4] = n0 * other.m[4] + n4 * other.m[5] + n8 * other.m[6] + n12 * other.m[7];
+        this.m[5] = n1 * other.m[4] + n5 * other.m[5] + n9 * other.m[6] + n13 * other.m[7];
+        this.m[6] = n2 * other.m[4] + n6 * other.m[5] + n10 * other.m[6] + n14 * other.m[7];
+        this.m[7] = n3 * other.m[4] + n7 * other.m[5] + n11 * other.m[6] + n15 * other.m[7];
+        this.m[8] = n0 * other.m[8] + n4 * other.m[9] + n8 * other.m[10] + n12 * other.m[11];
+        this.m[9] = n1 * other.m[8] + n5 * other.m[9] + n9 * other.m[10] + n13 * other.m[11];
+        this.m[10] = n2 * other.m[8] + n6 * other.m[9] + n10 * other.m[10] + n14 * other.m[11];
+        this.m[11] = n3 * other.m[8] + n7 * other.m[9] + n11 * other.m[10] + n15 * other.m[11];
+        this.m[12] = n0 * other.m[12] + n4 * other.m[13] + n8 * other.m[14] + n12 * other.m[15];
+        this.m[13] = n1 * other.m[12] + n5 * other.m[13] + n9 * other.m[14] + n13 * other.m[15];
+        this.m[14] = n2 * other.m[12] + n6 * other.m[13] + n10 * other.m[14] + n14 * other.m[15];
+        this.m[15] = n3 * other.m[12] + n7 * other.m[13] + n11 * other.m[14] + n15 * other.m[15];
         return this;
+    }
+    consMul(other) {
+        let r = this.clone();
+        return r.mul(other);
     }
     transpose() {
         this.swap(this.m, 1, this.m, 4);

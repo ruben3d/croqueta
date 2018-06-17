@@ -7,6 +7,7 @@ import { Kernel } from "../core/Kernel";
 import { Renderer } from "../renderer/Renderer";
 import { ShaderManager } from "../renderer/ShaderManager";
 
+
 export class Container {
 
     private applicationContext: Context;
@@ -21,9 +22,7 @@ export class Container {
     constructor(canvasId: string) {
         this.canvasId = canvasId;
         this.eventManager = new EventManager();
-    }
 
-    start() {
         this.renderingContext = this.createContext(this.canvasId);
 
         this.applicationContext = new Context();
@@ -32,7 +31,9 @@ export class Container {
 
         this.kernel = new Kernel(this.eventManager, 6);
         this.kernel.addTask(this.renderer);
+    }
 
+    start() {
         this.kernel.start();
     }
 
