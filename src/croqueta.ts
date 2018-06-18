@@ -14,11 +14,13 @@ export * from "./base/Exceptions"
 export * from "./base/IterableCollection"
 export * from "./base/Option"
 export * from "./base/Try"
+export * from "./base/Either"
 export * from "./container/Container"
 export * from "./math/math"
 export * from "./math/Matrix"
 export * from "./math/Point"
 export * from "./math/Ray"
 export * from "./math/Vector"
+export * from "./renderer/Shader"
 
 console.log("croqueta " + Version);

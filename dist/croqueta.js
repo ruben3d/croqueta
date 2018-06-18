@@ -119,6 +119,9 @@ class SomeImpl {
     orElse(f) {
         return this;
     }
+    fold(ifEmpty, f) {
+        return f(this.value);
+    }
     forEach(f) {
         f(this.value);
     }
@@ -156,6 +159,9 @@ class NoneImpl {
     }
     orElse(f) {
         return f();
+    }
+    fold(ifEmpty, f) {
+        return ifEmpty();
     }
     forEach(f) {
     }
@@ -288,6 +294,82 @@ class FailureImpl {
     }
     recoverWith(f) {
         return f(this.error);
+    }
+    toOption() {
+        return None();
+    }
+}
+
+function Right(value) {
+    return new RightImpl(value);
+}
+function Left(value) {
+    return new LeftImpl(value);
+}
+class RightImpl {
+    constructor(value) {
+        this.value = value;
+    }
+    isLeft() {
+        return false;
+    }
+    isRight() {
+        return true;
+    }
+    getOrElse(other) {
+        return this.value;
+    }
+    fold(l, r) {
+        return r(this.value);
+    }
+    forEach(f) {
+        f(this.value);
+    }
+    filterOrElse(f, zero) {
+        return f(this.value) ? this : Left(zero());
+    }
+    flatMap(f) {
+        return f(this.value);
+    }
+    map(f) {
+        return Right(f(this.value));
+    }
+    swap() {
+        return Left(this.value);
+    }
+    toOption() {
+        return Some(this.value);
+    }
+}
+class LeftImpl {
+    constructor(value) {
+        this.value = value;
+    }
+    isLeft() {
+        return true;
+    }
+    isRight() {
+        return false;
+    }
+    getOrElse(other) {
+        return other();
+    }
+    fold(l, r) {
+        return l(this.value);
+    }
+    forEach(f) {
+    }
+    filterOrElse(f, zero) {
+        return this;
+    }
+    flatMap(f) {
+        return Left(this.value);
+    }
+    map(f) {
+        return Left(this.value);
+    }
+    swap() {
+        return Right(this.value);
     }
     toOption() {
         return None();
@@ -821,6 +903,76 @@ class Vector extends Coord4D {
     }
 }
 
+var CrShaderType;
+(function (CrShaderType) {
+    CrShaderType[CrShaderType["VertexShader"] = WebGL2RenderingContext.VERTEX_SHADER] = "VertexShader";
+    CrShaderType[CrShaderType["FragmentShader"] = WebGL2RenderingContext.FRAGMENT_SHADER] = "FragmentShader";
+})(CrShaderType || (CrShaderType = {}));
+class CrShader {
+    constructor(gl, type, source) {
+        this.gl = gl;
+        this.shader = Option(gl.createShader(type))
+            .fold(() => Left("Error requesting new WebGLShader"), s => Right(s))
+            .flatMap(shader => {
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                return Right(shader);
+            }
+            else {
+                const msg = Option(gl.getShaderInfoLog(shader)).getOrElse(() => "Unknown error on shader compilation");
+                gl.deleteShader(shader);
+                return Left(msg);
+            }
+        });
+    }
+    get() {
+        return this.shader;
+    }
+    release() {
+        this.shader = this.shader.flatMap(s => {
+            this.gl.deleteShader(s);
+            return Left("Deleted");
+        });
+    }
+}
+class Shader {
+    constructor(gl, vertexShaderSource, fragmentShaderSource) {
+        this.gl = gl;
+        const vs = new CrShader(gl, CrShaderType.VertexShader, vertexShaderSource).get();
+        const fs = new CrShader(gl, CrShaderType.FragmentShader, fragmentShaderSource).get();
+        if (vs.isRight() && fs.isRight()) {
+            this.program = Option(gl.createProgram())
+                .fold(() => Left("Error requesting new WebGLProgram"), s => Right(s))
+                .flatMap(p => {
+                vs.forEach(s => gl.attachShader(p, s));
+                fs.forEach(s => gl.attachShader(p, s));
+                gl.linkProgram(p);
+                if (gl.linkProgram(p)) {
+                    return Right(p);
+                }
+                else {
+                    const msg = Option(gl.getProgramInfoLog(p)).getOrElse(() => "Unknown error on program linking");
+                    gl.deleteProgram(p);
+                    return Left(msg);
+                }
+            });
+        }
+        else {
+            const msg = `Error on shader compilation: 
+                Vertex shader: ${vs.swap().getOrElse(() => 'Success')}
+                Fargment shader: ${fs.swap().getOrElse(() => 'Success')}`;
+            this.program = Left(msg);
+        }
+    }
+    release() {
+        this.program = this.program.flatMap(p => {
+            this.gl.deleteProgram(p);
+            return Left("Deleted");
+        });
+    }
+}
+
 const VersionMajor = 0;
 const VersionMinor = 0;
 const VersionRev = 1;
@@ -847,12 +999,15 @@ exports.Option = Option;
 exports.Success = Success;
 exports.Failure = Failure;
 exports.Try = Try;
+exports.Right = Right;
+exports.Left = Left;
 exports.Container = Container;
 exports.Epsilon = Epsilon;
 exports.Matrix = Matrix;
 exports.Point = Point;
 exports.Ray = Ray;
 exports.Vector = Vector;
+exports.Shader = Shader;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

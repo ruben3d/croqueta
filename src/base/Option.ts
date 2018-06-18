@@ -27,6 +27,7 @@ export interface Option<T> {
     orUndefined(): T | undefined;
     orElse(f: () => Option<T>): Option<T>;
 
+    fold<U>(ifEmpty: () => U, f: (v: T) => U): U;
     forEach(f: (v: T) => void): void;
     filter(f: (v: T) => boolean): Option<T>;
     flatMap<U>(f: (v: T) => Option<U>): Option<U>;
@@ -69,6 +70,10 @@ class SomeImpl<T> implements Option<T> {
 
     orElse(f: () => Option<T>): Option<T> {
         return this;
+    }
+
+    fold<U>(ifEmpty: () => U, f: (v: T) => U): U {
+        return f(this.value);
     }
 
     forEach(f: (value: T) => void): void {
@@ -120,6 +125,10 @@ class NoneImpl<T> implements Option<T> {
 
     orElse(f: () => Option<T>): Option<T> {
         return f();
+    }
+
+    fold<U>(ifEmpty: () => U, f: (v: T) => U): U {
+        return ifEmpty();
     }
 
     forEach(f: (value: T) => void): void {
