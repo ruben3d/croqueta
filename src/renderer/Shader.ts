@@ -1,5 +1,5 @@
-import { Either, Right, Left } from "../base/Either";
-import { Option } from "../base/Option";
+import { ShaderException } from "../base/Exceptions";
+import { None, Option, Some } from "../base/Option";
 
 
 enum CrShaderType {
@@ -9,34 +9,66 @@ enum CrShaderType {
 
 class CrShader {
     private gl: WebGL2RenderingContext;
-    private shader: Either<string, WebGLShader>;
+    private shader: Option<WebGLShader>;
 
     constructor(gl: WebGL2RenderingContext, type: CrShaderType, source: ShaderSource) {
         this.gl = gl;
-        this.shader = Option(gl.createShader(type))
-            .fold(() => Left("Error requesting new WebGLShader"), s => Right(s))
-            .flatMap(shader => {
-                gl.shaderSource(shader, source);
-                gl.compileShader(shader);
-                if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                    return Right(shader);
-                } else {
-                    const msg = Option(gl.getShaderInfoLog(shader)).getOrElse(() => "Unknown error on shader compilation");
-                    gl.deleteShader(shader);
-                    return Left(msg);
-                }
-            });
+        this.shader = None();
+        const shader = Option(gl.createShader(type)).getOrElse(() => { throw new ShaderException("Error requesting a new WebGLShader") });
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            const msg = Option(gl.getShaderInfoLog(shader)).getOrElse(() => "Unknown error on shader compilation");
+            gl.deleteShader(shader);
+            throw new ShaderException(msg);
+        }
+        this.shader = Some(shader);
     }
 
-    get(): Either<string, WebGLShader> {
-        return this.shader;
+    get(): WebGLShader {
+        return this.shader.getOrElse(() => { throw new ShaderException("Invalid shader") });
+    }
+
+    isValid(): boolean {
+        return this.shader.nonEmpty();
     }
 
     release(): void {
-        this.shader = this.shader.flatMap(s => {
-            this.gl.deleteShader(s);
-            return Left("Deleted");
-        });
+        this.shader.forEach(s => this.gl.deleteShader(s));
+        this.shader = None();
+    }
+}
+
+class CrProgram {
+    private gl: WebGL2RenderingContext;
+    private program: Option<WebGLProgram>;
+
+    constructor(gl: WebGL2RenderingContext, vs: WebGLShader, fs: WebGLShader) {
+        this.gl = gl;
+        this.program = None();
+        const p = Option(gl.createProgram()).getOrElse(() => { throw new ShaderException("Error requesting new WebGLProgram") });
+        gl.attachShader(p, vs);
+        gl.attachShader(p, fs);
+        gl.linkProgram(p);
+        if (!gl.linkProgram(p)) {
+            const msg = Option(gl.getProgramInfoLog(p)).getOrElse(() => "Unknown error on program linking");
+            gl.deleteProgram(p);
+            throw new ShaderException(msg);
+        }
+        this.program = Some(p);
+    }
+
+    get(): WebGLProgram {
+        return this.program.getOrElse(() => { throw new ShaderException("Invalid program") });
+    }
+
+    isValid(): boolean {
+        return this.program.nonEmpty();
+    }
+
+    release(): void {
+        this.program.forEach(p => this.gl.deleteProgram(p));
+        this.program = None();
     }
 }
 
@@ -44,42 +76,23 @@ export type ShaderSource = string;
 
 export class Shader {
 
-    private gl: WebGL2RenderingContext;
-    private program: Either<string, WebGLProgram>
+    private program: CrProgram;
+    private vs: CrShader;
+    private fs: CrShader;
 
     constructor(gl: WebGL2RenderingContext, vertexShaderSource: ShaderSource, fragmentShaderSource: ShaderSource) {
-        this.gl = gl;
-        const vs = new CrShader(gl, CrShaderType.VertexShader, vertexShaderSource).get();
-        const fs = new CrShader(gl, CrShaderType.FragmentShader, fragmentShaderSource).get();
+        this.vs = new CrShader(gl, CrShaderType.VertexShader, vertexShaderSource);
+        this.fs = new CrShader(gl, CrShaderType.FragmentShader, fragmentShaderSource);
+        this.program = new CrProgram(gl, this.vs.get(), this.fs.get());
+    }
 
-        // TODO Some more functional utilities so this code looks nicer and shorter
-        if (vs.isRight() && fs.isRight()) {
-            this.program = Option(gl.createProgram())
-                .fold(() => Left("Error requesting new WebGLProgram"), s => Right(s))
-                .flatMap(p => {
-                    vs.forEach(s => gl.attachShader(p, s));
-                    fs.forEach(s => gl.attachShader(p, s));
-                    gl.linkProgram(p);
-                    if (gl.linkProgram(p)) {
-                        return Right(p);
-                    } else {
-                        const msg = Option(gl.getProgramInfoLog(p)).getOrElse(() => "Unknown error on program linking");
-                        gl.deleteProgram(p);
-                        return Left(msg);
-                    }
-                });
-        } else {
-            const msg = `Error on shader compilation: 
-                Vertex shader: ${vs.swap().getOrElse(() => 'Success')}
-                Fargment shader: ${fs.swap().getOrElse(() => 'Success')}`;
-            this.program = Left(msg);
-        }
+    get(): WebGLProgram {
+        return this.program;
     }
 
     release(): void {
-        this.program = this.program.flatMap(p => {
-            this.gl.deleteProgram(p);
-            return Left("Deleted");
-        });
+        this.program.release();
+        this.vs.release();
+        this.fs.release();
     }
 }

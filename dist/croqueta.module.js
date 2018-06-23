@@ -18,6 +18,10 @@ class MissingParameterException extends CroquetaException {
     constructor(msg) { super(msg); }
 }
 
+class ShaderException extends CroquetaException {
+    constructor(msg) { super(msg); }
+}
+
 class ArrayListIterator {
     constructor(list) {
         this.idx = 0;
@@ -905,65 +909,67 @@ var CrShaderType;
 class CrShader {
     constructor(gl, type, source) {
         this.gl = gl;
-        this.shader = Option(gl.createShader(type))
-            .fold(() => Left("Error requesting new WebGLShader"), s => Right(s))
-            .flatMap(shader => {
-            gl.shaderSource(shader, source);
-            gl.compileShader(shader);
-            if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                return Right(shader);
-            }
-            else {
-                const msg = Option(gl.getShaderInfoLog(shader)).getOrElse(() => "Unknown error on shader compilation");
-                gl.deleteShader(shader);
-                return Left(msg);
-            }
-        });
+        this.shader = None();
+        const shader = Option(gl.createShader(type)).getOrElse(() => { throw new ShaderException("Error requesting a new WebGLShader"); });
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            const msg = Option(gl.getShaderInfoLog(shader)).getOrElse(() => "Unknown error on shader compilation");
+            gl.deleteShader(shader);
+            throw new ShaderException(msg);
+        }
+        this.shader = Some(shader);
     }
     get() {
-        return this.shader;
+        return this.shader.getOrElse(() => { throw new ShaderException("Invalid shader"); });
+    }
+    isValid() {
+        return this.shader.nonEmpty();
     }
     release() {
-        this.shader = this.shader.flatMap(s => {
-            this.gl.deleteShader(s);
-            return Left("Deleted");
-        });
+        this.shader.forEach(s => this.gl.deleteShader(s));
+        this.shader = None();
+    }
+}
+class CrProgram {
+    constructor(gl, vs, fs) {
+        this.gl = gl;
+        this.program = None();
+        const p = Option(gl.createProgram()).getOrElse(() => { throw new ShaderException("Error requesting new WebGLProgram"); });
+        gl.attachShader(p, vs);
+        gl.attachShader(p, fs);
+        gl.linkProgram(p);
+        if (!gl.linkProgram(p)) {
+            const msg = Option(gl.getProgramInfoLog(p)).getOrElse(() => "Unknown error on program linking");
+            gl.deleteProgram(p);
+            throw new ShaderException(msg);
+        }
+        this.program = Some(p);
+    }
+    get() {
+        return this.program.getOrElse(() => { throw new ShaderException("Invalid program"); });
+    }
+    isValid() {
+        return this.program.nonEmpty();
+    }
+    release() {
+        this.program.forEach(p => this.gl.deleteProgram(p));
+        this.program = None();
     }
 }
 class Shader {
     constructor(gl, vertexShaderSource, fragmentShaderSource) {
-        this.gl = gl;
-        const vs = new CrShader(gl, CrShaderType.VertexShader, vertexShaderSource).get();
-        const fs = new CrShader(gl, CrShaderType.FragmentShader, fragmentShaderSource).get();
-        if (vs.isRight() && fs.isRight()) {
-            this.program = Option(gl.createProgram())
-                .fold(() => Left("Error requesting new WebGLProgram"), s => Right(s))
-                .flatMap(p => {
-                vs.forEach(s => gl.attachShader(p, s));
-                fs.forEach(s => gl.attachShader(p, s));
-                gl.linkProgram(p);
-                if (gl.linkProgram(p)) {
-                    return Right(p);
-                }
-                else {
-                    const msg = Option(gl.getProgramInfoLog(p)).getOrElse(() => "Unknown error on program linking");
-                    gl.deleteProgram(p);
-                    return Left(msg);
-                }
-            });
-        }
-        else {
-            const msg = `Error on shader compilation: 
-                Vertex shader: ${vs.swap().getOrElse(() => 'Success')}
-                Fargment shader: ${fs.swap().getOrElse(() => 'Success')}`;
-            this.program = Left(msg);
-        }
+        this.vs = new CrShader(gl, CrShaderType.VertexShader, vertexShaderSource);
+        this.fs = new CrShader(gl, CrShaderType.FragmentShader, fragmentShaderSource);
+        this.program = new CrProgram(gl, this.vs.get(), this.fs.get());
+    }
+    get() {
+        return this.program;
     }
     release() {
-        this.program = this.program.flatMap(p => {
-            this.gl.deleteProgram(p);
-            return Left("Deleted");
-        });
+        this.program.release();
+        this.vs.release();
+        this.fs.release();
     }
 }
 
@@ -974,4 +980,4 @@ const VersionDev = true;
 const Version = "" + VersionMajor + "." + VersionMinor + "." + VersionRev + (VersionDev ? "-dev" : "");
 console.log("croqueta " + Version);
 
-export { VersionMajor, VersionMinor, VersionRev, VersionDev, Version, ArrayList, assert, Context, CroquetaException, WebGL2NotSupportedException, AssertionErrorException, NoSuchElementException, MissingParameterException, Some, None, Option, Success, Failure, Try, Right, Left, Container, Epsilon, Matrix, Point, Ray, Vector, Shader };
+export { VersionMajor, VersionMinor, VersionRev, VersionDev, Version, ArrayList, assert, Context, CroquetaException, WebGL2NotSupportedException, AssertionErrorException, NoSuchElementException, MissingParameterException, ShaderException, Some, None, Option, Success, Failure, Try, Right, Left, Container, Epsilon, Matrix, Point, Ray, Vector, Shader };

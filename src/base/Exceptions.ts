@@ -17,3 +17,7 @@ export class NoSuchElementException extends CroquetaException {};
 export class MissingParameterException extends CroquetaException {
     constructor(msg: string) {super(msg)}
 };
+
+export class ShaderException extends CroquetaException {
+    constructor(msg: string) {super(msg)}
+};
